@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Calculator App Using Spring 4 WebSocket</title>
+    <script src="./sock.js"></script>
+    <script src="./stomp.js"></script>
+    <script type="text/javascript">
+      var stompClient = null;
+      function setConnected(connected) {
+        document.getElementById("connect").disabled = connected;
+        document.getElementById("disconnect").disabled = !connected;
+        document.getElementById("calculationDiv").style.visibility = connected
+          ? "visible"
+          : "hidden";
+        document.getElementById("calResponse").innerHTML = "";
+      }
+      function connect() {
+        var token =
+          "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJmb3JtYWdvLm1heEBnbWFpbC5jb20iLCJhdXRoIjoiUk9MRV9VU0VSIiwiZXhwIjoxNTU5ODA1ODMzfQ.XZ51caJZd7ODWt-FmKab3DIx7qsdtkXAM0RpHcLBP71X3rzkbAqIF0SNH8WYUI9U3vyUhu-fKqd2-yCP1zhuCg";
+        var url =
+          `https://api-test.bitflyx.com/orderbook?access_token=` + token;
+
+        //   var wurl =
+        //   "https://api-test.bitflyx.com/orderbook";
+        var socket = new SockJS(url);
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function(frame) {
+          setConnected(true);
+          console.log("Connected: " + frame);
+
+
+        //   "/topic/orderbook"
+          stompClient.subscribe("/user/queue/messages", function(calResult) {
+              debugger;
+            showResult(JSON.parse(calResult.body));
+          });
+        });
+      }
+      function disconnect() {
+        stompClient.disconnect();
+        setConnected(false);
+        console.log("Disconnected");
+      }
+      function sendNum() {
+        var num1 = document.getElementById("num1").value;
+        var num2 = document.getElementById("num2").value;
+        stompClient.send(
+          "/calcApp/add",
+          {},
+          JSON.stringify({ num1: num1, num2: num2 })
+        );
+      }
+      function showResult(message) {
+        console.log(message);
+        // var response = document.getElementById("calResponse");
+        // var p = document.createElement("p");
+        // p.style.wordWrap = "break-word";
+        // p.appendChild(document.createTextNode(message));
+        // response.appendChild(p);
+      }
+    </script>
+  </head>
+  <body>
+    <noscript
+      ><h2>
+        Enable Java script and reload this page to run Websocket Demo
+      </h2></noscript
+    >
+    <h1>Calculator App Using Spring 4 WebSocket</h1>
+    <div>
+      <div>
+        <button id="connect" onclick="connect();">Connect</button>
+        <button id="disconnect" disabled="disabled" onclick="disconnect();">
+          Disconnect</button
+        ><br /><br />
+      </div>
+      <div id="calculationDiv">
+        <label>Number One:</label><input type="text" id="num1" /><br />
+        <label>Number Two:</label><input type="text" id="num2" /><br /><br />
+        <button id="sendNum" onclick="sendNum();">Send to Add</button>
+        <p id="calResponse"></p>
+      </div>
+    </div>
+  </body>
+</html>
